@@ -1,8 +1,15 @@
 import axios from "axios"
 
+
+
+const backendUrl = import.meta.env.NODE_BASE_URL
+
 export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL ?? "http://localhost:3200",
+  baseURL: backendUrl,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 })
+
+export { backendUrl }

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Shield, UserPlus, Share2, PhoneCall, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { backendUrl, backendUrl } from "@/lib/api";
 
 const steps = [
   {
@@ -40,6 +41,7 @@ const proFeatures = [
   "Priority support",
 ];
 
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
@@ -52,10 +54,10 @@ export default function Landing() {
           </div>
           <nav className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">Sign In</Link>
+              <Link to={`${backendUrl}/auth/signin`}>Sign In</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link to="/register">Get Started</Link>
+              <Link to={`${backendUrl}/auth/signin`}>Get Started</Link>
             </Button>
           </nav>
         </div>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { api } from "./api";
+import { api, backendUrl } from "./api";
 
 export interface User {
   id: string;
@@ -11,50 +11,38 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-const SESSION_KEY = "trustcode_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem(SESSION_KEY);
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored) as User);
-      } catch {
-        localStorage.removeItem(SESSION_KEY);
-      }
-    }
-    setIsLoading(false);
+    api.get<{ user?: User }>("/auth/session")
+      .then(res => {
+        if (res.data?.user) {
+          setUser(res.data.user);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const res = await api.post<{ user: User }>("/auth/login", { email, password });
-    setUser(res.data.user);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(res.data.user));
+  const login = () => {
+    window.location.href = `${backendUrl}/auth/signin`;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await api.post("/auth/signout");
     setUser(null);
-    localStorage.removeItem(SESSION_KEY);
-  };
-
-  const register = async (name: string, email: string, password: string) => {
-    const res = await api.post<{ user: User }>("/auth/register", { name, email, password });
-    setUser(res.data.user);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(res.data.user));
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
