@@ -2,7 +2,7 @@ import axios from "axios"
 
 
 
-const backendUrl = import.meta.env.NODE_BASE_URL
+const backendUrl = "http://localhost:3200";
 
 export const api = axios.create({
   baseURL: backendUrl,
