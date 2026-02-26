@@ -12,6 +12,8 @@
   "dependencies": {
     "@auth/express": "^0.12.1",
     "@auth/pg-adapter": "^1.11.1",
+    "@types/express": "^5.0.6",
+    "@types/pg": "^8.16.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "pg": "^8.18.0"

@@ -3,8 +3,7 @@ import { ExpressAuth } from "@auth/express"
 import PostgresAdapter from "@auth/pg-adapter"
 import { Pool } from "pg"
 import Google from "@auth/core/providers/google"
-
-require('dotenv').config();
+import 'dotenv/config' 
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
