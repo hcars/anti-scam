@@ -44,7 +44,35 @@ app.use(
 
          return `${frontend}/dashboard`
         }
+      },
+    trustHost: true,
+    cookies: {
+      sessionToken: {
+          name: `__Secure-authjs.session-token`,
+          options: {
+            httpOnly: true,
+            sameSite: 'none', // Required for cross-site (Vercel -> Render)
+            path: '/',
+            secure: true      // Required for sameSite: 'none'
+          }
+      },
+      callbackUrl: {
+        name: `__Secure-authjs.callback-url`,
+        options: {
+          sameSite: 'none',
+          path: '/',
+          secure: true
+        }
+      },
+      csrfToken: {
+        name: `__Host-authjs.csrf-token`,
+        options: {
+          sameSite: 'none',
+          path: '/',
+          secure: true
+        }
       }
+    }
   })
 );
 app.use((req, res, next) => {
@@ -68,3 +96,4 @@ app.get("/auth/signin",( req, res, next) => {
     // Second callback: Executes after success
     res.redirect(`${frontend}/dashboard`);
 });
+
