@@ -4,28 +4,12 @@ import PostgresAdapter from "@auth/pg-adapter"
 import { Pool } from "pg"
 import Google from "@auth/core/providers/google"
 import 'dotenv/config'
-import path from "path";
-import fs from 'fs';
 
 
-if (process.env.SUPABASE_CA_CERT) {
-  const certPath = path.join('/tmp', 'supabase-ca.crt');
-  
-  // 1. Write the string to a physical file in the only writable Vercel directory
-  fs.writeFileSync(certPath, process.env.SUPABASE_CA_CERT);
-  
-  // 2. Tell Node.js to include this file in its trusted CA chain
-  process.env.NODE_EXTRA_CA_CERTS = certPath;
-  
-  console.log("SSL: Global CA certificate injected successfully.");
-}
+
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
-  ssl: {
-    rejectUnauthorized: true,
-    ca: process.env.SUPABASE_CA_CERT,
-  },
 });
 
 const app = express();
