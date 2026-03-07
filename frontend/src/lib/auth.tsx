@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    api.get<{ user?: User }>("/auth/session")
+    api.get("/auth/session")
       .then(res => {
         if (res.data?.user) {
           setUser(res.data.user);
