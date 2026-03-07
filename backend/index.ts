@@ -4,7 +4,7 @@ import PostgresAdapter from "@auth/pg-adapter"
 import { Pool } from "pg"
 import Google from "@auth/core/providers/google"
 import 'dotenv/config'
-
+import cors from 'cors';
 
 
 
@@ -17,17 +17,14 @@ const app = express();
 const frontend = process.env.FRONTEND_URL ?? "http://localhost:3000";
 
 // CORS must be first — before auth middleware — so credentialed requests work
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", frontend);
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") {
-    res.sendStatus(200);
-    return;
-  }
-  next();
-});
+app.use(
+  cors({
+    origin: frontend,
+    credentials: true,                         // Crucial for allowing cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  })
+);
 
 app.get("/", (req, res) => res.redirect(`${frontend}/dashboard`));
 app.listen(3200, () => console.log("Server running on port 3200"));
