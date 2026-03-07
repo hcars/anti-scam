@@ -54,10 +54,10 @@ export default function Landing() {
           </div>
           <nav className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link to={`${backendUrl}/auth/signin`}>Sign In</Link>
+              <Link to="/login">Sign In</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link to={`${backendUrl}/auth/signin`}>Get Started</Link>
+              <Link to="/login">Get Started</Link>
             </Button>
           </nav>
         </div>
