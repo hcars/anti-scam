@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Shield, UserPlus, Share2, PhoneCall, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { backendUrl, backendUrl } from "@/lib/api";
+import { backendUrl } from "@/lib/api";
 
 const steps = [
   {

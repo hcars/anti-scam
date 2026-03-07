@@ -131,6 +131,7 @@ const result = await Bun.build({
   sourcemap: "linked",
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
+    "process.env.BUN_PUBLIC_NODE_BASE_URL": JSON.stringify(process.env.BUN_PUBLIC_NODE_BASE_URL),
   },
   ...cliConfig,
 });
