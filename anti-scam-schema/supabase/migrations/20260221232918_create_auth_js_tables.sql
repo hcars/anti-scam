@@ -24,6 +24,8 @@ CREATE TABLE accounts
  
   PRIMARY KEY (id)
 );
+
+
  
 CREATE TABLE sessions
 (
