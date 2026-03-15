@@ -1,15 +1,38 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { data, useNavigate } from "react-router-dom";
 import { Shield, Copy, Check, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
+import { api } from "@/lib/api";
 
 interface Group {
   id: string;
   name: string;
   code: string;
   daysUntilRotation: number;
+}
+async function fetchChallenge(): Promise<{challenge:string, response: string} | null> {
+    try {
+      const res = await api.get("/challenge");
+      return res?.data;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
+  
+function CallResponseDisplay({value, valueTitle}: {value: string, valueTitle:string}) {
+  return (
+    <div className="bg-slate-50 rounded-xl py-6 px-4 text-center border border-slate-100">
+          <p className="text-xs text-slate-400 uppercase tracking-widest mb-2 font-medium">
+            {valueTitle}
+          </p>
+          <div className="text-4xl font-bold font-mono tracking-widest text-slate-900">
+            {value}
+          </div>
+        </div>
+  );
 }
 
 const MOCK_GROUPS: Group[] = [
@@ -24,12 +47,25 @@ const MOCK_GROUPS: Group[] = [
 function GroupCard({ group }: { group: Group }) {
   const [copied, setCopied] = useState(false);
   const shareLink = `${window.location.origin}/group/${group.id}`;
+  const [challenge, setChallenge] = useState("");
+  const [response, setResponse] = useState("");
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    fetchChallenge().then((challengeData) => {
+      if (challengeData !== null){
+        setChallenge(challengeData.challenge);
+        setResponse(challengeData.response);
+      }
+    }
+  )
+
+  }, []);
 
   return (
     <Card>
@@ -43,14 +79,8 @@ function GroupCard({ group }: { group: Group }) {
 
       <CardContent className="space-y-4">
         {/* Code display */}
-        <div className="bg-slate-50 rounded-xl py-6 px-4 text-center border border-slate-100">
-          <p className="text-xs text-slate-400 uppercase tracking-widest mb-2 font-medium">
-            Current Code
-          </p>
-          <div className="text-4xl font-bold font-mono tracking-widest text-slate-900">
-            {group.code}
-          </div>
-        </div>
+        <CallResponseDisplay value={challenge} valueTitle="Challenge Word"/>
+        <CallResponseDisplay value={response} valueTitle="Reponse Word"/>
 
         {/* Share link */}
         <div>
@@ -108,6 +138,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [showUpgrade, setShowUpgrade] = useState(false);
 
+
   const handleLogout = () => {
     logout();
     navigate("/", { replace: true });
@@ -119,6 +150,7 @@ export default function Dashboard() {
     }
     // Pro users would open a create-group flow here
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50">
