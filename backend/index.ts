@@ -5,7 +5,8 @@ import { Pool } from "pg"
 import Google from "@auth/core/providers/google"
 import 'dotenv/config'
 import cors from 'cors';
-import { generatePair } from "./wordGenerator";
+import { generatePair, initWordGenerator } from "./wordGenerator";
+import { dateDiff } from "./utils/dateUtils";
 
 
 
@@ -14,6 +15,8 @@ const pool = new Pool({
 });
 
 const app = express();
+
+const wordGenerator = initWordGenerator("Oxford_5000.txt");
 
 const frontend = process.env.FRONTEND_URL ?? "http://localhost:3000";
 
@@ -111,21 +114,23 @@ app.get("/challenge", async (req, res) => {
     else {
       const userId = userIdQuery.rows[0]["userid"];
       const challenge = await client.query('SELECT * FROM challenge WHERE id=$1', [userId]);
-      const [newCall, newResponse] = generatePair();
-      if (challenge.rowCount === 0) {
-        const date = Date.now();
-        client.query("INSERT INTO challenge VALUES ($1, $2 , $3, $4)", [userId, newCall, newResponse, date]);
-        return res.status(200).json({challenge: newCall, response: newResponse});
+      const [newCall, newResponse] = generatePair(wordGenerator);
+      const newDate = new Date(Date.now());
+      const newDateString = newDate.toISOString().split("T")[0];
+      if (challenge.rows.length === 0) {
+        client.query("INSERT INTO challenge VALUES ($1, $2 , $3, $4)", [userId, newCall, newResponse, newDateString]);
+        return res.status(200).json({challenge: newCall, response: newResponse, daysLeft: 7});
 
       }
       else {
-        const date = new Date(challenge.rows[0]["creation_date"]);
-        if (Math.round(Date.now() - date.getTime() / (1000 * 60 * 60 * 24)) > 7) {
-          client.query("UPDATE challenge SET challenge=$1, response=$2, creation_date=$3", [newCall, newResponse, Date.now()]);
-          return res.status(200).json({challenge: newCall, response: newResponse});
+        const oldDate = new Date(challenge.rows[0]["creation_date"]);
+        const age = dateDiff(newDate, oldDate);
+        if (age > 7) {
+          client.query("UPDATE challenge SET challenge=$1, response=$2, creation_date=$3", [newCall, newResponse, newDateString]);
+          return res.status(200).json({challenge: newCall, response: newResponse, creationDate: newDateString, daysLeft: 7});
         }
         else {
-          return res.status(200).json({challenge: challenge.rows[0]["challenge"], response: challenge.rows[0]["response"]})
+          return res.status(200).json({challenge: challenge.rows[0]["challenge"], response: challenge.rows[0]["response"], daysLeft: 7 - age});
         }
 
       }

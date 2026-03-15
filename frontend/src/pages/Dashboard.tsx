@@ -12,7 +12,7 @@ interface Group {
   code: string;
   daysUntilRotation: number;
 }
-async function fetchChallenge(): Promise<{challenge:string, response: string} | null> {
+async function fetchChallenge(): Promise<{challenge:string, response: string, daysLeft: number} | null> {
     try {
       const res = await api.get("/challenge");
       return res?.data;
@@ -49,6 +49,7 @@ function GroupCard({ group }: { group: Group }) {
   const shareLink = `${window.location.origin}/group/${group.id}`;
   const [challenge, setChallenge] = useState("");
   const [response, setResponse] = useState("");
+  const [daysUntilRotation, setDaysUntilRotation] = useState(7);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareLink);
@@ -61,6 +62,7 @@ function GroupCard({ group }: { group: Group }) {
       if (challengeData !== null){
         setChallenge(challengeData.challenge);
         setResponse(challengeData.response);
+        setDaysUntilRotation(challengeData.daysLeft)
       }
     }
   )
@@ -73,7 +75,7 @@ function GroupCard({ group }: { group: Group }) {
         <CardTitle className="text-lg">{group.name}</CardTitle>
         <CardDescription className="flex items-center gap-1">
           <Clock className="size-3" />
-          Code rotates in {group.daysUntilRotation} day{group.daysUntilRotation !== 1 ? "s" : ""}
+          Code rotates in {daysUntilRotation} day{daysUntilRotation !== 1 ? "s" : ""}
         </CardDescription>
       </CardHeader>
 
