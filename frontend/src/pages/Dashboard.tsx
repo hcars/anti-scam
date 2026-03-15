@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { data, useNavigate } from "react-router-dom";
 import { Shield, Copy, Check, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
-import { api } from "@/lib/api";
+import { useChallenge } from "@/lib/useChallenge";
 
 interface Group {
   id: string;
@@ -12,24 +12,15 @@ interface Group {
   code: string;
   daysUntilRotation: number;
 }
-async function fetchChallenge(): Promise<{challenge:string, response: string, daysLeft: number} | null> {
-    try {
-      const res = await api.get("/challenge");
-      return res?.data;
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
-  };
-  
-function CallResponseDisplay({value, valueTitle}: {value: string, valueTitle:string}) {
+
+function CallResponseDisplay({value, valueTitle, loading}: {value: string, valueTitle:string, loading?: boolean}) {
   return (
     <div className="bg-slate-50 rounded-xl py-6 px-4 text-center border border-slate-100">
           <p className="text-xs text-slate-400 uppercase tracking-widest mb-2 font-medium">
             {valueTitle}
           </p>
           <div className="text-4xl font-bold font-mono tracking-widest text-slate-900">
-            {value}
+            {loading ? "Loading..." : value}
           </div>
         </div>
   );
@@ -46,10 +37,8 @@ const MOCK_GROUPS: Group[] = [
 
 function GroupCard({ group }: { group: Group }) {
   const [copied, setCopied] = useState(false);
+  const { data, loading } = useChallenge();
   const shareLink = `${window.location.origin}/group/${group.id}`;
-  const [challenge, setChallenge] = useState("");
-  const [response, setResponse] = useState("");
-  const [daysUntilRotation, setDaysUntilRotation] = useState(7);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareLink);
@@ -57,32 +46,20 @@ function GroupCard({ group }: { group: Group }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  useEffect(() => {
-    fetchChallenge().then((challengeData) => {
-      if (challengeData !== null){
-        setChallenge(challengeData.challenge);
-        setResponse(challengeData.response);
-        setDaysUntilRotation(challengeData.daysLeft)
-      }
-    }
-  )
-
-  }, []);
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">{group.name}</CardTitle>
         <CardDescription className="flex items-center gap-1">
           <Clock className="size-3" />
-          Code rotates in {daysUntilRotation} day{daysUntilRotation !== 1 ? "s" : ""}
+          Code rotates in {data?.daysLeft ?? 7} day{(data?.daysLeft ?? 7) !== 1 ? "s" : ""}
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Code display */}
-        <CallResponseDisplay value={challenge} valueTitle="Challenge Word"/>
-        <CallResponseDisplay value={response} valueTitle="Reponse Word"/>
+        <CallResponseDisplay value={data?.challenge ?? ""} valueTitle="Challenge Word" loading={loading}/>
+        <CallResponseDisplay value={data?.response ?? ""} valueTitle="Response Word" loading={loading}/>
 
         {/* Share link */}
         <div>
