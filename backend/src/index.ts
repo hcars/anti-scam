@@ -91,9 +91,69 @@ app.get("/auth/signin",( req, res, next) => {
     res.redirect(`${frontend}/dashboard`);
 });
 
- 
+app.get("/groups", async (req, res) => {
+  const session = res.locals.session
+  
+  if (!session?.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  const client = await pool.connect()
+  const name = session.user.name;
+  const email = session.user.email;
 
- 
+  try {
+    const userIdQuery = await client.query('select id as userid FROM users WHERE name=$1 AND email=$2', [name, email]);
+    if (userIdQuery.rows.length === 0) {
+      return res.status(401).json({ error: "User not found." });
+    }
+    else {
+      const userId = userIdQuery.rows[0]["userid"];
+      const groups = await client.query('SELECT * FROM groups WHERE owner_id=$1', [userId]);
+      return res.status(200).json({groups: groups});
+
+    }
+
+  }
+  catch (error) {
+    console.error("Challenge endpoint error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  } 
+  finally {
+    client.release()
+  }
+});
+
+app.post("/groups", async (req, res) => {
+  const session = res.locals.session
+  if (!session?.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  console.log(session)
+  const client = await pool.connect()
+  const name = session.user.name;
+  const email = session.user.email;
+
+  try {
+    const userIdQuery = await client.query('select id as userid FROM users WHERE name=$1 AND email=$2', [name, email]);
+    if (userIdQuery.rows.length === 0) {
+      return res.status(401).json({ error: "User not found." });
+    }
+    else {
+      const userId = userIdQuery.rows[0]["userid"];
+      const groups = await client.query('INSERT INTO groups (owner_id) VALUES ($1)', [userId]);
+      return res.status(200).json({groups: groups});
+    }
+
+  }
+  catch (error) {
+    console.error("Challenge endpoint error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  } 
+  finally {
+    client.release()
+  }
+});
+
 
 
 app.get("/challenge", async (req, res) => {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { useChallenge } from "@/lib/useChallenge";
+import { createGroup } from "@/lib/groups";
 
 interface Group {
   id: string;
@@ -45,7 +46,7 @@ function GroupCard({ group }: { group: Group }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
+  console.log(group);
   return (
     <Card>
       <CardHeader>
@@ -124,6 +125,7 @@ export default function Dashboard() {
   };
 
   const handleNewGroup = () => {
+    createGroup();
     if (user?.plan === "free") {
       setShowUpgrade(true);
     }
