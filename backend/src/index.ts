@@ -68,6 +68,10 @@ app.use(
   })
 );
 
+// Parse JSON request bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.get("/", (req, res) => res.redirect(`${frontend}/dashboard`));
 app.listen(3200, () => console.log("Server running on port 3200"));
 
@@ -108,14 +112,14 @@ app.get("/groups", async (req, res) => {
     }
     else {
       const userId = userIdQuery.rows[0]["userid"];
-      const groups = await client.query('SELECT * FROM groups WHERE owner_id=$1', [userId]);
-      return res.status(200).json({groups: groups});
+      const groupsResult = await client.query('SELECT group_id, owner_id, group_name FROM groups WHERE owner_id=$1', [userId]);
+      return res.status(200).json({groups: groupsResult.rows});
 
     }
 
   }
   catch (error) {
-    console.error("Challenge endpoint error:", error);
+    console.error("Groups endpoint error:", error);
     return res.status(500).json({ error: "Internal server error" });
   } 
   finally {
@@ -128,7 +132,11 @@ app.post("/groups", async (req, res) => {
   if (!session?.user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
-  console.log(session)
+  console.log(req)
+  const { group_name } = req.body;
+  if (!group_name) {
+    return res.status(400).json({ error: "group_name is required" });
+  }
   const client = await pool.connect()
   const name = session.user.name;
   const email = session.user.email;
@@ -140,13 +148,14 @@ app.post("/groups", async (req, res) => {
     }
     else {
       const userId = userIdQuery.rows[0]["userid"];
-      const groups = await client.query('INSERT INTO groups (owner_id) VALUES ($1)', [userId]);
-      return res.status(200).json({groups: groups});
+      const createdGroupResult = await client.query('INSERT INTO groups (owner_id, group_name) VALUES ($1, $2) RETURNING group_id, owner_id, group_name', [userId, group_name]);
+      const createdGroup = createdGroupResult.rows[0];
+      return res.status(201).json({group: createdGroup});
     }
 
   }
   catch (error) {
-    console.error("Challenge endpoint error:", error);
+    console.error("Groups endpoint error:", error);
     return res.status(500).json({ error: "Internal server error" });
   } 
   finally {
@@ -163,6 +172,11 @@ app.get("/challenge", async (req, res) => {
     return res.status(401).json({ error: "Not authenticated" });
   }
   
+  const { groupId } = req.query;
+  if (!groupId) {
+    return res.status(400).json({ error: "groupId query parameter is required" });
+  }
+  
   const client = await pool.connect()
   const name = session.user.name;
   const email = session.user.email;
@@ -173,12 +187,19 @@ app.get("/challenge", async (req, res) => {
     }
     else {
       const userId = userIdQuery.rows[0]["userid"];
-      const challenge = await client.query('SELECT * FROM challenge WHERE id=$1', [userId]);
+      
+      // Verify user owns this group
+      const groupVerify = await client.query('SELECT group_id FROM groups WHERE group_id=$1 AND owner_id=$2', [groupId, userId]);
+      if (groupVerify.rows.length === 0) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      const challenge = await client.query('SELECT * FROM challenge WHERE group_id=$1', [groupId]);
       const [newCall, newResponse] = generatePair(wordGenerator);
       const newDate = new Date(Date.now());
       const newDateString = newDate.toISOString().split("T")[0];
       if (challenge.rows.length === 0) {
-        client.query("INSERT INTO challenge VALUES ($1, $2 , $3, $4)", [userId, newCall, newResponse, newDateString]);
+        await client.query("INSERT INTO challenge (group_id, challenge, response, creation_date) VALUES ($1, $2, $3, $4)", [groupId, newCall, newResponse, newDateString]);
         return res.status(200).json({challenge: newCall, response: newResponse, daysLeft: 7});
 
       }
@@ -186,7 +207,7 @@ app.get("/challenge", async (req, res) => {
         const oldDate = new Date(challenge.rows[0]["creation_date"]);
         const age = dateDiff(newDate, oldDate);
         if (age > 7) {
-          client.query("UPDATE challenge SET challenge=$1, response=$2, creation_date=$3", [newCall, newResponse, newDateString]);
+          await client.query("UPDATE challenge SET challenge=$1, response=$2, creation_date=$3 WHERE group_id=$4", [newCall, newResponse, newDateString, groupId]);
           return res.status(200).json({challenge: newCall, response: newResponse, creationDate: newDateString, daysLeft: 7});
         }
         else {

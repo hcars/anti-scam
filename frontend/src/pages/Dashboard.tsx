@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { useChallenge } from "@/lib/useChallenge";
-import { createGroup } from "@/lib/groups";
-
-interface Group {
-  id: string;
-  name: string;
-  code: string;
-  daysUntilRotation: number;
-}
+import { createGroup, fetchGroups, type Group as GroupType } from "@/lib/groups";
 
 function CallResponseDisplay({value, valueTitle, loading}: {value: string, valueTitle:string, loading?: boolean}) {
   return (
@@ -27,30 +20,29 @@ function CallResponseDisplay({value, valueTitle, loading}: {value: string, value
   );
 }
 
-const MOCK_GROUPS: Group[] = [
+const MOCK_GROUPS: GroupType[] = [
   {
-    id: "grp_abc123",
-    name: "Johnson Family",
-    code: "MAPLE-9234",
-    daysUntilRotation: 4,
+    group_id: 1,
+    owner_id: 1,
+    group_name: "Johnson Family",
   },
 ];
 
-function GroupCard({ group }: { group: Group }) {
+function GroupCard({ group }: { group: GroupType }) {
   const [copied, setCopied] = useState(false);
-  const { data, loading } = useChallenge();
-  const shareLink = `${window.location.origin}/group/${group.id}`;
+  const { data, loading } = useChallenge(group.group_id.toString());
+  const shareLink = `${window.location.origin}/group/${group.group_id}`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  console.log(group);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{group.name}</CardTitle>
+        <CardTitle className="text-lg">{group.group_name}</CardTitle>
         <CardDescription className="flex items-center gap-1">
           <Clock className="size-3" />
           Code rotates in {data?.daysLeft ?? 7} day{(data?.daysLeft ?? 7) !== 1 ? "s" : ""}
@@ -117,6 +109,9 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [groupNameInput, setGroupNameInput] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const { data: groups, loading: groupsLoading, error: groupsError } = fetchGroups();
 
 
   const handleLogout = () => {
@@ -124,12 +119,19 @@ export default function Dashboard() {
     navigate("/", { replace: true });
   };
 
-  const handleNewGroup = () => {
-    createGroup();
-    if (user?.plan === "free") {
-      setShowUpgrade(true);
+  const handleNewGroup = async () => {
+    if (!groupNameInput.trim()) {
+      return;
     }
-    // Pro users would open a create-group flow here
+    try {
+      await createGroup(groupNameInput);
+      setGroupNameInput("");
+      setShowCreateForm(false);
+      // Refresh groups list
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to create group:", err);
+    }
   };
 
 
@@ -162,10 +164,32 @@ export default function Dashboard() {
               Share the link below with your family members.
             </p>
           </div>
-          <Button onClick={handleNewGroup} size="sm">
+          <Button onClick={() => setShowCreateForm(!showCreateForm)} size="sm">
             + New Group
           </Button>
         </div>
+
+        {/* Create Group Form */}
+        {showCreateForm && (
+          <div className="mb-6 p-4 bg-white border rounded-lg">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Group name (e.g., Johnson Family)"
+                value={groupNameInput}
+                onChange={(e) => setGroupNameInput(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-md text-sm"
+                onKeyDown={(e) => e.key === "Enter" && handleNewGroup()}
+              />
+              <Button onClick={handleNewGroup} size="sm" className="bg-blue-600">
+                Create
+              </Button>
+              <Button onClick={() => setShowCreateForm(false)} size="sm" variant="outline">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Upgrade banner */}
         {showUpgrade && (
@@ -174,12 +198,29 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Loading/Error states */}
+        {groupsLoading && <p className="text-slate-500">Loading groups...</p>}
+        {groupsError && <p className="text-red-500">{groupsError}</p>}
+
         {/* Groups */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          {MOCK_GROUPS.map((group) => (
-            <GroupCard key={group.id} group={group} />
-          ))}
-        </div>
+        {!groupsLoading && (
+          <>
+            {groups.length > 0 ? (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {groups.map((group) => (
+                  <GroupCard key={group.group_id} group={group} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-slate-500 mb-4">No groups yet. Create your first group to get started!</p>
+                <Button onClick={() => setShowCreateForm(true)} size="sm">
+                  + Create Group
+                </Button>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Plan badge */}
         <div className="mt-8 text-center">

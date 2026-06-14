@@ -7,7 +7,7 @@ interface ChallengeData {
   daysLeft: number;
 }
 
-export function useChallenge() {
+export function useChallenge(groupId?: string) {
   const [data, setData] = useState<ChallengeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,8 @@ export function useChallenge() {
     const fetchChallenge = async () => {
       try {
         setLoading(true);
-        const res = await api.get("/challenge");
+        const params = groupId ? `?groupId=${groupId}` : "";
+        const res = await api.get(`/challenge${params}`);
         setData(res?.data);
       } catch (err) {
         console.error(err);
@@ -27,7 +28,7 @@ export function useChallenge() {
     };
 
     fetchChallenge();
-  }, []);
+  }, [groupId]);
 
   return { data, loading, error };
 }

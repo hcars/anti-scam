@@ -1,43 +1,49 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 
-interface Group {
+export interface Group {
+  group_id: number;
+  owner_id: number;
+  group_name: string;
+}
+
+export interface Challenge {
   challenge: string;
   response: string;
   daysLeft: number;
 }
 
-export async function createGroup() {
+export async function createGroup(groupName: string) {
     try {
-        await api.post("/groups")
+        const res = await api.post("/groups", { group_name: groupName });
+        return res?.data?.group;
       } 
     catch (err) {
         console.error(err);
+        throw err;
       } 
-    finally {
-      }
 }
 
 export function fetchGroups() {
-  const [data, setData] = useState<Group | null>(null);
+  const [data, setData] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchGroup = async () => {
+    const fetchGroupsList = async () => {
       try {
         setLoading(true);
         const res = await api.get("/groups");
-        setData(res?.data);
+        setData(res?.data?.groups || []);
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch challenge");
+        setError("Failed to fetch groups");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchGroup();
+    fetchGroupsList();
   }, []);
 
   return { data, loading, error };
