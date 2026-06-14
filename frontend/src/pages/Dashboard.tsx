@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { data, useNavigate } from "react-router-dom";
 import { Shield, Copy, Check, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,7 @@ function CallResponseDisplay({value, valueTitle, loading}: {value: string, value
   );
 }
 
-const MOCK_GROUPS: GroupType[] = [
-  {
-    group_id: 1,
-    owner_id: 1,
-    group_name: "Johnson Family",
-  },
-];
+
 
 function GroupCard({ group }: { group: GroupType }) {
   const [copied, setCopied] = useState(false);
@@ -110,10 +104,19 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [groupNameInput, setGroupNameInput] = useState("");
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const { data: groups, loading: groupsLoading, error: groupsError } = fetchGroups();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showGroups, setShowGroups] = useState(false);
 
 
+  useEffect(() => {
+      if (!groupsLoading && !showCreateForm) {
+        setShowGroups(true);
+      }
+      else {
+        setShowGroups(false);
+      }
+    }, [groupsLoading, showCreateForm]);
   const handleLogout = () => {
     logout();
     navigate("/", { replace: true });
@@ -203,7 +206,7 @@ export default function Dashboard() {
         {groupsError && <p className="text-red-500">{groupsError}</p>}
 
         {/* Groups */}
-        {!groupsLoading && (
+        {showGroups && (
           <>
             {groups.length > 0 ? (
               <div className="grid sm:grid-cols-2 gap-4">
