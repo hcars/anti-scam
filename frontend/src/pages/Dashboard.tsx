@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { useChallenge } from "@/lib/useChallenge";
 import { createGroup, fetchGroups, type Group as GroupType } from "@/lib/groups";
 
-function CallResponseDisplay({value, valueTitle, loading}: {value: string, valueTitle:string, loading?: boolean}) {
+export function CallResponseDisplay({value, valueTitle, loading}: {value: string, valueTitle:string, loading?: boolean}) {
   return (
     <div className="bg-slate-50 rounded-xl py-6 px-4 text-center border border-slate-100">
           <p className="text-xs text-slate-400 uppercase tracking-widest mb-2 font-medium">

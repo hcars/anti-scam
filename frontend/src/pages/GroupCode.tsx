@@ -2,15 +2,20 @@ import { useLoaderData } from "react-router-dom";
 import { Shield, AlertTriangle } from "lucide-react";
 import type { LoaderFunctionArgs } from "react-router-dom";
 import { api } from "@/lib/api";
+import type { Challenge } from "@/lib/groups";
+import { CallResponseDisplay } from "./Dashboard";
+import { CardContent } from "@/components/ui/card";
 
 interface GroupCodeData {
   groupName: string;
   code: string;
 }
 
-export async function loader({ params }: LoaderFunctionArgs): Promise<GroupCodeData> {
+export async function loader({ params }: LoaderFunctionArgs): Promise<Challenge> {
   try {
-    const res = await api.get<GroupCodeData>(`/group/${params["id"]}/code`);
+  const res = await api.get(`/challenge/?groupId=${params["id"]}`);
+    // const groupCode = res.data.groups?.filter((group: Array<Object>) => group.group_id === params["id"]);
+
     return res.data;
   } catch {
     // Return placeholder until backend is ready
@@ -22,7 +27,7 @@ export async function loader({ params }: LoaderFunctionArgs): Promise<GroupCodeD
 }
 
 export default function GroupCode() {
-  const { groupName, code } = useLoaderData() as GroupCodeData;
+  const { challenge, response} = useLoaderData() as Challenge;
 
   return (
     <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center px-4 py-12">
@@ -34,16 +39,17 @@ export default function GroupCode() {
         <p className="text-sm font-semibold text-blue-600 uppercase tracking-widest mb-1">
           TrustCode
         </p>
-        <p className="text-slate-500 text-sm mb-8">{groupName}</p>
+        {/* <p className="text-slate-500 text-sm mb-8">{groupName}</p> */}
 
         {/* Code card */}
         <div className="bg-white rounded-2xl shadow-md px-6 py-10 mb-6">
           <p className="text-xs text-slate-400 uppercase tracking-widest mb-4 font-medium">
             Today's Code
           </p>
-          <div className="text-5xl sm:text-6xl font-bold font-mono tracking-widest text-slate-900 break-all">
-            {code}
-          </div>
+        <CardContent className="space-y-4">
+            <CallResponseDisplay value={challenge} valueTitle="Challenge Word" loading={false}/>
+            <CallResponseDisplay value={response} valueTitle="Response Word" loading={false}/>
+          </CardContent>
         </div>
 
         {/* Warning */}

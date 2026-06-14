@@ -162,7 +162,7 @@ export default function Landing() {
             </Card>
 
             {/* Pro */}
-            <Card className="border-blue-500 border-2 relative">
+            {/* <Card className="border-blue-500 border-2 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
                   MOST POPULAR
@@ -191,7 +191,7 @@ export default function Landing() {
                   <Link to="/register">Start Free Trial</Link>
                 </Button>
               </CardFooter>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </section>
